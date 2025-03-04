@@ -1,0 +1,40 @@
+local HttpService = game:GetService("HttpService")
+
+local FacilityLibrary = {}
+
+local hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+
+function FacilityLibrary.getLink(key)
+	return "https://facility-hub.xyz/api/validate/" .. key .. "/" .. hwid
+end
+
+function FacilityLibrary.validateDefaultKey(key)
+	if not http_request then
+		warn("http_request n'est pas disponible.")
+		return false
+	end
+
+	local url = FacilityLibrary.getLink(key)
+	local response = http_request({
+		Url = url,
+		Method = "GET",
+	})
+
+	if response and response.StatusCode == 200 and response.Body then
+		local data = HttpService:JSONDecode(response.Body)
+		if data and data.message and string.find(data.message, "Key validated") then
+			return true
+		else
+			return false
+		end
+	else
+		warn(
+			"Erreur lors de la requête: ",
+			response and response.StatusCode or "Inconnu",
+			response and response.Body or "Vide"
+		)
+		return false
+	end
+end
+
+return FacilityLibrary
