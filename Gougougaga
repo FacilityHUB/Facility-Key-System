@@ -594,7 +594,7 @@ sections.Misc1:Toggle({
             Description = (value and "Enabled" or "Disabled") .. " Auto Execute"
         })
         if value then
-            queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/FacilityHUB/FacilityHub/refs/heads/main/Universal%20Aimbot'))()") --Changer
+            queue_on_teleport("loadstring(game:HttpGet('https://raw.githubusercontent.com/FacilityHUB/Facility-Key-System/refs/heads/main/Gougougaga'))()") --Changer
             sendValidnotif("Script will be auto executed after teleport")
         end
     end,
