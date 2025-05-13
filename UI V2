@@ -189,7 +189,7 @@ LootlabsBtn.BackgroundTransparency = 1
 LootlabsBtn.Parent = Lootlabs
 
 LootlabsBtn.MouseButton1Click:Connect(function()
-    setclipboard("https://facility-hub.xyz/")
+    setclipboard("https://beta-facility-key.vercel.app")
     game:GetService("StarterGui"):SetCore("SendNotification", {
 		Title = "Facility Key",
 		Text = "Key Link Copied",
