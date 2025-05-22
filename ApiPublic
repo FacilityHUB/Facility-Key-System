@@ -1,0 +1,84 @@
+-- InterfaceKeyModule.lua
+--------------------------------------------------------------------
+-- Facility Key System – Interface Module
+--------------------------------------------------------------------
+local HttpService      = game:GetService("HttpService")
+local AnalyticsService = game:GetService("RbxAnalyticsService")
+
+-- Cross‑exploit HTTP request helper
+local request = http_request or (syn and syn.request) or (http and http.request)
+if not request then
+    error("[InterfaceKeyModule] No HTTP-request function available.")
+end
+
+-- Base64‑encoded: "https://auth-key-ten.vercel.app/validate-key"
+local BASE_URL = HttpService:Base64Decode(
+    "aHR0cHM6Ly9hdXRoLWtleS10ZW4udmVyY2VsLmFwcC92YWxpZGF0ZS1rZXk="
+)
+
+local Interface = {}
+
+--------------------------------------------------------------------
+-- INTERNAL HELPERS
+--------------------------------------------------------------------
+local function buildUrl(base, hub, checkpoint, key, hwid)
+    return string.format("%s/%s/%s/%s/%s", base, hub, checkpoint, key, hwid)
+end
+
+--------------------------------------------------------------------
+-- PUBLIC API
+--------------------------------------------------------------------
+--- Validate a key.
+-- @param key (string)   – The key to validate                     (required)
+-- @param cfg (table)    – Optional override table:
+--                        ▸ hub        – hub name
+--                        ▸ checkpoint – checkpoint name
+--                        ▸ hwid       – custom HWID
+--                        ▸ base_url   – override API base URL
+-- @return (bool, any)   – success, data | errorMsg
+function Interface.validate(key, cfg)
+    cfg = cfg or {}
+
+    local hub        = cfg.hub        or rawget(_G, "hub_name")        or hub_name
+    local checkpoint = cfg.checkpoint or rawget(_G, "checkpoints_name") or checkpoints_name
+    local hwidValue  = cfg.hwid       or rawget(_G, "hwid")            or AnalyticsService:GetClientId()
+    local base       = cfg.base_url   or BASE_URL
+
+    if not (hub and checkpoint and key) then
+        error("[InterfaceKeyModule] Missing hub_name / checkpoints_name / key")
+    end
+
+    local url = buildUrl(base, hub, checkpoint, key, hwidValue)
+    local t0  = tick()
+
+    print(string.format("[●] Verifying key ➜ %s | %s", hub, checkpoint))
+
+    local response = request({ Url = url, Method = "GET" })
+    local latency  = math.floor((tick() - t0) * 1000)
+
+    if response and response.StatusCode == 200 and response.Body then
+        local data = HttpService:JSONDecode(response.Body)
+        if data.success then
+            print(string.format("[✔] Key OK in %sms (server %sms)", latency, data.duration or "-"))
+            return true, data
+        else
+            warn("[✘] Invalid key:", data.error or "Unknown error")
+            return false, data.error
+        end
+    else
+        warn("[✘] HTTP error | Status:", response and response.StatusCode or "N/A")
+        warn("Body:", response and response.Body or "Empty")
+        return false, "HTTP error"
+    end
+end
+
+--------------------------------------------------------------------
+-- SYNTACTIC SUGAR : allow direct call Interface(key, cfg)
+--------------------------------------------------------------------
+setmetatable(Interface, {
+    __call = function(_, ...)
+        return Interface.validate(...)
+    end
+})
+
+return Interface
